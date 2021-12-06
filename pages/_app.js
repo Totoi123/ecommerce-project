@@ -1,7 +1,15 @@
-import '../styles/globals.css'
+import { SnackbarProvider } from 'notistack';
+import '../styles/globals.css';
+import { StoreProvider } from '../utils/Store';
 
 function MyApp({ Component, pageProps }) {
-  return <Component {...pageProps} />
+  return (
+    <SnackbarProvider anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+      <StoreProvider>
+        <Component {...pageProps} />
+      </StoreProvider>
+    </SnackbarProvider>
+  );
 }
 
-export default MyApp
+export default MyApp;
