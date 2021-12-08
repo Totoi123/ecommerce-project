@@ -6,7 +6,7 @@ import db from '../../utils/db';
 import Product from '../../models/Product';
 import axios from 'axios';
 import { useContext } from 'react';
-import Store from '../../utils/Store';
+import { Store } from '../../utils/Store';
 import { useRouter } from 'next/router';
 
 const ProductScreen = ({ product }) => {

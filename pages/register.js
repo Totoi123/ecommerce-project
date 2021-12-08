@@ -3,7 +3,7 @@ import { List, ListItem, TextField } from '@material-ui/core';
 import Link from 'next/link';
 import axios from 'axios';
 import { useContext, useEffect } from 'react';
-import Store from '../utils/Store';
+import { Store } from '../utils/Store';
 import { useRouter } from 'next/router';
 import Cookies from 'js-cookie';
 import { Controller, useForm } from 'react-hook-form';

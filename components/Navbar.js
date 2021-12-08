@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { useContext, useState } from 'react';
-import Store from '../utils/Store';
+import { Store } from '../utils/Store';
 import { Badge, Button, Menu, MenuItem } from '@material-ui/core';
 import Cookies from 'js-cookie';
 import { useRouter } from 'next/router';

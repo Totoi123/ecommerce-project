@@ -1,7 +1,7 @@
 import Layout from '../components/Layout';
 import dynamic from 'next/dynamic';
 import { useContext } from 'react';
-import Store from '../utils/Store';
+import { Store } from '../utils/Store';
 import NextLink from 'next/link';
 import EmptyCart from '../components/EmptyCart';
 import Image from 'next/image';
