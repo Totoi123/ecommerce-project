@@ -6,6 +6,7 @@ import Product from '../models/Product';
 import axios from 'axios';
 import { useContext } from 'react';
 import { Store } from '../utils/Store';
+import Rating from '@material-ui/lab/Rating';
 
 const Home = ({ products }) => {
   const { state, dispatch } = useContext(Store);
@@ -44,6 +45,7 @@ const Home = ({ products }) => {
                     <div className="content">
                       <p className="is-size-4 title">{product.name}</p>
                       <p className="is-size-4 subtitle">₹ {product.price}</p>
+                      <Rating value={product.rating} readOnly></Rating>
                     </div>
                   </div>
                 </div>
@@ -69,7 +71,7 @@ export default Home;
 
 export async function getServerSideProps() {
   await db.connect();
-  const products = await Product.find({}).lean();
+  const products = await Product.find({}, '-reviews').lean();
   await db.disconnect();
 
   return {
