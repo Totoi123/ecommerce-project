@@ -6,11 +6,9 @@ import NextLink from 'next/link';
 import Image from 'next/image';
 import axios from 'axios';
 import { useRouter } from 'next/router';
-import CheckoutWizard from '../../components/CheckoutWizard';
 import { useSnackbar } from 'notistack';
 import { getError } from '../../utils/error';
 import { CircularProgress } from '@material-ui/core';
-import { PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js';
 
 function reducer(state, action) {
   switch (action.type) {
@@ -28,26 +26,51 @@ function reducer(state, action) {
       return { ...state, loadingPay: false, errorPay: action.payload };
     case 'PAY_RESET':
       return { ...state, loadingPay: false, successPay: false, errorPay: '' };
+    case 'DELIVER_REQUEST':
+      return { ...state, loadingDeliver: true };
+    case 'DELIVER_SUCCESS':
+      return { ...state, loadingDeliver: false, successDeliver: true };
+    case 'DELIVER_FAIL':
+      return { ...state, loadingDeliver: false, errorDeliver: action.payload };
+    case 'DELIVER_RESET':
+      return {
+        ...state,
+        loadingDeliver: false,
+        successDeliver: false,
+        errorDeliver: '',
+      };
     default:
       state;
   }
 }
+function loadScript(src) {
+  return new Promise((resolve) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = () => {
+      resolve(true);
+    };
+    script.onerror = () => {
+      resolve(false);
+    };
+    document.body.appendChild(script);
+  });
+}
 
 const Order = ({ params }) => {
   const orderId = params.id;
-  const [{ isPending }, paypalDispatch] = usePayPalScriptReducer();
   const router = useRouter();
   const { state } = useContext(Store);
   const { userInfo } = state;
 
-  const [{ loading, error, order, successPay }, dispatch] = useReducer(
-    reducer,
-    {
-      loading: true,
-      order: {},
-      error: '',
-    }
-  );
+  const [
+    { loading, error, order, successPay, loadingDeliver, successDeliver },
+    dispatch,
+  ] = useReducer(reducer, {
+    loading: true,
+    order: {},
+    error: '',
+  });
   const {
     shippingAddress,
     paymentMethod,
@@ -78,70 +101,87 @@ const Order = ({ params }) => {
         dispatch({ type: 'FETCH_FAIL', payload: getError(err) });
       }
     };
-    if (!order._id || successPay || (order._id && order._id !== orderId)) {
+    if (
+      !order._id ||
+      successPay ||
+      successDeliver ||
+      (order._id && order._id !== orderId)
+    ) {
       fetchOrder();
       if (successPay) {
         dispatch({ type: 'PAY_RESET' });
       }
-    } else {
-      const loadPaypalScript = async () => {
-        const { data: clientId } = await axios.get('/api/keys/paypal', {
-          headers: { authorization: `Bearer ${userInfo.token}` },
-        });
-        paypalDispatch({
-          type: 'resetOptions',
-          value: {
-            'client-id': clientId,
-            currency: 'INR',
-          },
-        });
-        paypalDispatch({ type: 'setLoadingStatus', value: 'pending' });
-      };
-      loadPaypalScript();
+      if (successDeliver) {
+        dispatch({ type: 'DELIVER_RESET' });
+      }
     }
-  }, [order, successPay]);
+  }, [order, successPay, successDeliver]);
   const { closeSnackbar, enqueueSnackbar } = useSnackbar();
 
-  function createOrder(data, actions) {
-    return actions.order
-      .create({
-        purchase_units: [
-          {
-            amount: { value: totalPrice },
-          },
-        ],
-      })
-      .then((orderID) => {
-        return orderID;
-      });
-  }
-  function onApprove(data, actions) {
-    return actions.order.capture().then(async function (details) {
-      try {
-        dispatch({ type: 'PAY_REQUEST' });
-        const { data } = await axios.put(
-          `/api/orders/${order._id}/pay`,
-          details,
-          {
-            headers: { authorization: `Bearer ${userInfo.token}` },
-          }
-        );
-        dispatch({ type: 'PAY_SUCCESS', payload: data });
-        enqueueSnackbar('Order is paid', { variant: 'success' });
-      } catch (err) {
-        dispatch({ type: 'PAY_FAIL', payload: getError(err) });
-        enqueueSnackbar(getError(err), { variant: 'error' });
-      }
-    });
+  async function displayRazorpay(order) {
+    const res = await loadScript(
+      'https://checkout.razorpay.com/v1/checkout.js'
+    );
+
+    if (!res) {
+      alert('Razorpay SDK failed to load. Are you online?');
+      return;
+    }
+
+    const options = {
+      key: 'rzp_test_SzmHg89AV5ifAN',
+      currency: 'INR',
+      amount: order.totalPrice.toString() * 100,
+      order_id: { orderId },
+      name: 'Ecommerce Ceckout',
+      handler: async function (response) {
+        const razorPayPaymentId = response.razorpay_payment_id;
+
+        try {
+          closeSnackbar();
+          dispatch({ type: 'PAY_REQUEST' });
+          const { data } = await axios.put(
+            `/api/orders/${order._id}/pay`,
+            razorPayPaymentId,
+            { headers: { authorization: `Bearer ${userInfo.token}` } }
+          );
+          dispatch({ type: 'PAY_SUCCESS', payload: data });
+          enqueueSnackbar('Payment Successful', { variant: 'success' });
+        } catch (err) {
+          dispatch({ type: 'PAY_FAIL', payload: getError(err) });
+          enqueueSnackbar(getError(err), { variant: 'error' });
+        }
+      },
+      prefill: {
+        email: 'sdfdsjfh2@ndsfdf.com',
+        phone_number: '9899999999',
+      },
+    };
+    const paymentObject = new window.Razorpay(options);
+    paymentObject.open();
   }
 
-  function onError(err) {
-    enqueueSnackbar(getError(err), { variant: 'error' });
+  async function deliverOrderHandler() {
+    try {
+      dispatch({ type: 'DELIVER_REQUEST' });
+      const { data } = await axios.put(
+        `/api/orders/${order._id}/deliver`,
+        {},
+        {
+          headers: { authorization: `Bearer ${userInfo.token}` },
+        }
+      );
+      dispatch({ type: 'DELIVER_SUCCESS', payload: data });
+      enqueueSnackbar('Order is delivered', { variant: 'success' });
+    } catch (err) {
+      dispatch({ type: 'DELIVER_FAIL', payload: getError(err) });
+      enqueueSnackbar(getError(err), { variant: 'error' });
+    }
   }
+
   return (
     <Layout title={`Order ${orderId}`}>
-      <div className="container">
-        <CheckoutWizard activeStep={3} />
+      <div className="container mt-6">
         <h1 className="is-size-5 has-text-link title">Order {orderId}</h1>
         {loading ? (
           <div className="has-text-left">
@@ -277,15 +317,23 @@ const Order = ({ params }) => {
                 <div className="mt-5">
                   {!isPaid && (
                     <div>
-                      {isPending ? (
-                        <CircularProgress />
-                      ) : (
-                        <PayPalButtons
-                          createOrder={createOrder}
-                          onApprove={onApprove}
-                          onError={onError}
-                        ></PayPalButtons>
-                      )}
+                      <button
+                        className="button is-link is-fullwidth"
+                        onClick={() => displayRazorpay(order)}
+                      >
+                        Pay Now
+                      </button>
+                    </div>
+                  )}
+                  {userInfo.isAdmin && order.isPaid && !order.isDelivered && (
+                    <div className="mt-5">
+                      {loadingDeliver && <CircularProgress />}
+                      <button
+                        className="button is-link is-fullwidth"
+                        onClick={deliverOrderHandler}
+                      >
+                        Deliver Order
+                      </button>
                     </div>
                   )}
                 </div>

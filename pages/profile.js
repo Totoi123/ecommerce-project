@@ -1,10 +1,10 @@
 import Layout from '../components/Layout';
 import { Controller, useForm } from 'react-hook-form';
-import { List, ListItem, TextField } from '@material-ui/core';
+import { List, ListItem, TextField, ListItemText } from '@material-ui/core';
 import axios from 'axios';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
-import NexLink from 'next/link';
+import NextLink from 'next/link';
 import React, { useEffect, useContext } from 'react';
 import { getError } from '../utils/error';
 import { Store } from '../utils/Store';
@@ -59,13 +59,21 @@ const Profile = () => {
   return (
     <Layout title="Profile">
       <div className="container">
-        <h1 className="is-size-5 has-text-link mt-5">User Profile</h1>
-        <div className="columns">
+        <div className="columns mt-5">
           <div className="column is-4">
             <div className="card">
-              <div className="card-content">
-                <div className="content"></div>
-              </div>
+              <List>
+                <NextLink href="/profile" passHref>
+                  <ListItem selected button component="a">
+                    <ListItemText primary="Admin Dashboard"></ListItemText>
+                  </ListItem>
+                </NextLink>
+                <NextLink href="/order-history" passHref>
+                  <ListItem button component="a">
+                    <ListItemText primary="Orders"></ListItemText>
+                  </ListItem>
+                </NextLink>
+              </List>
             </div>
           </div>
           <div className="column is-8">

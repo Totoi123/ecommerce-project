@@ -75,7 +75,7 @@ const AdminDashboard = () => {
     fetchData();
   }, []);
   return (
-    <Layout title="Dashboard">
+    <Layout title=" Admin Dashboard">
       <div className="container mt-5">
         <div className="columns">
           <div className="column is-4">
