@@ -6,8 +6,9 @@ import axios from 'axios';
 import { useContext } from 'react';
 import { Store } from '../utils/Store';
 import ProductItem from '../components/ProductItem';
-
-const Home = ({ products }) => {
+import Carousel from 'react-material-ui-carousel';
+import { Link } from '@material-ui/core';
+const Home = ({ topRatedProductsDocs, featuredProductsDocs }) => {
   const { state, dispatch } = useContext(Store);
 
   const addToCartHandler = async (product) => {
@@ -24,9 +25,34 @@ const Home = ({ products }) => {
   };
   return (
     <Layout title="Home">
-      <h1 className="is-size-3 has-text-link-dark title mt-4">Products</h1>
+      <section className="hero is-small">
+        <Carousel animation="slide">
+          {featuredProductsDocs.map((product) => (
+            <NextLink
+              key={product._id}
+              href={`/product/${product.slug}`}
+              passHref
+            >
+              <Link>
+                <img
+                  src={product.featuredImage}
+                  alt={product.name}
+                  style={{
+                    width: '100%',
+                    height: '500px',
+                  }}
+                ></img>
+              </Link>
+            </NextLink>
+          ))}
+        </Carousel>
+      </section>
+
+      <h2 className="is-size-3 has-text-link-dark title mt-4">
+        Popular Products
+      </h2>
       <div className="columns is-multiline">
-        {products.map((product) => (
+        {topRatedProductsDocs.map((product) => (
           <div className="column is-3" key={product.name}>
             <ProductItem
               product={product}
@@ -43,12 +69,24 @@ export default Home;
 
 export async function getServerSideProps() {
   await db.connect();
-  const products = await Product.find({}, '-reviews').lean();
+  const featuredProductsDocs = await Product.find(
+    { isFeatured: true },
+    '-reviews'
+  )
+    .lean()
+    .limit(3);
+  const topRatedProductsDocs = await Product.find({}, '-reviews')
+    .lean()
+    .sort({
+      rating: -1,
+    })
+    .limit(8);
   await db.disconnect();
 
   return {
     props: {
-      products: products.map(db.convertDocToObj),
+      featuredProductsDocs: featuredProductsDocs.map(db.convertDocToObj),
+      topRatedProductsDocs: topRatedProductsDocs.map(db.convertDocToObj),
     },
   };
 }

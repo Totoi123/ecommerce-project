@@ -135,7 +135,7 @@ const Navbar = () => {
         <div className="navbar-brand">
           <Link href="/">
             <a className="navbar-item is-size-4 title has-text-link-dark mt-2">
-              Ecommerce
+              S3Mart
             </a>
           </Link>
         </div>

@@ -93,7 +93,7 @@ const ProductScreen = ({ product }) => {
         </div>
 
         <div className="column" style={{ padding: '20px', marginTop: '65px' }}>
-          <h1 className="is-size-4 title">{product.name}</h1>
+          <h1 className="is-size-4 title ">{product.name}</h1>
           <p className="is-size-5 subtitle mt-5">{product.description}</p>
           <div className="content">
             <p className="is-size-5">

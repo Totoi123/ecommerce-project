@@ -42,7 +42,7 @@ const CartScreen = () => {
         <div className="container ">
           <h1 className="is-size-4 mt-5 has-text-left">{`Shopping cart (${cartItems.length} items)`}</h1>
 
-          <table className="table is-fullwidth  mt-5">
+          <table className="table is-fullwidth  mt-5 ">
             <thead>
               <tr className="has-text-centered">
                 <th></th>
@@ -75,7 +75,7 @@ const CartScreen = () => {
                       value={item.quantity}
                       onChange={(e) => updateCartHandler(item, e.target.value)}
                     >
-                      {[...Array(item.countInStock).keys()].map((x) => (
+                      {[...Array(item.countInStock - 28).keys()].map((x) => (
                         <MenuItem key={x + 1} value={x + 1}>
                           {x + 1}
                         </MenuItem>

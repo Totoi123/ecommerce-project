@@ -134,7 +134,7 @@ const Register = () => {
                         fullWidth
                         id="password"
                         label="Password"
-                        inputprops={{ type: 'password' }}
+                        type="password"
                         error={Boolean(errors.password)}
                         helperText={
                           errors.password
@@ -163,7 +163,7 @@ const Register = () => {
                         fullWidth
                         id="confirmPassword"
                         label="Confirm Password"
-                        inputprops={{ type: 'password' }}
+                        type="password"
                         error={Boolean(errors.password)}
                         helperText={
                           errors.password
